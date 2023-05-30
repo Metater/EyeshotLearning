@@ -25,6 +25,7 @@ using System.Windows.Media.Media3D;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Point3D = devDept.Geometry.Point3D;
+using Vector3D = devDept.Geometry.Vector3D;
 
 namespace EyeshotLearning
 {
@@ -47,11 +48,11 @@ namespace EyeshotLearning
 
         protected override void OnContentRendered(EventArgs e)
         {
-            SetDisplayMode(design1, displayType.Wireframe);
+            SetDisplayMode(design1, displayType.Rendered);
 
             design1.ProgressBar.Visible = false;
 
-            design1.ActiveViewport.Labels.Add(new TextOnly(0.5, 0.5, 1.5, "Hello, World!", new Font("Tahoma", 16f, System.Drawing.FontStyle.Bold), System.Drawing.Color.Green, ContentAlignment.MiddleCenter));
+            // design1.ActiveViewport.Labels.Add(new TextOnly(0, 0, 0, "Hello, World!", new Font("Tahoma", 16f, System.Drawing.FontStyle.Bold), System.Drawing.Color.Green, ContentAlignment.MiddleCenter));
 
             workManager.AppendToQueue(new BuildCube(state));
             workManager.RunAll(design1);
@@ -71,7 +72,7 @@ namespace EyeshotLearning
         }
         private void Design1_WorkCompleted(object sender, WorkCompletedEventArgs e)
         {
-            labelProgressBar.Content = "Completed";
+            labelProgressBar.Content = $"Completed work, On step: {state.CurrentStep}";
         }
 
         private void Button_Step_Click(object sender, RoutedEventArgs e)
@@ -128,19 +129,31 @@ namespace EyeshotLearning
 
             public override void DoWork(BackgroundWorker worker, DoWorkEventArgs e)
             {
-                state.Solid = Solid.CreateBox(1, 1, 1);
-                state.Text = new Text(0.5, 0.5, 1.01, "Hello, World!", 0.1, Text.alignmentType.MiddleCenter);
-                state.Circle = new Circle(0.5, 0.5, 1, 1);
+                state.Cube = Solid.CreateBox(1, 1, 1);
+                state.Cube.Translate(-0.5, -0.5, -0.5);
+
+                state.Cone = Solid.CreateCone(0.5, 0.1, 1, 16);
+                state.Cone.Translate(0, 0, -0.5);
+                state.Cone.Rotate(Utility.DegToRad(-90), Vector3D.AxisY);
+                state.Cone.Translate(-0.5, 0, 0);
+
+                state.Circle = new Circle(Plane.YZ, new Point3D(-1.5, 0, 0), 0.5);
+
+                state.Text = new Text(Plane.YZ, new Point3D(-1.5, 0, 0), "Hello, World!", 0.1, Text.alignmentType.MiddleCenter)
+                {
+                    Billboard = true
+                };
             }
 
             public override void WorkCompleted(object sender)
             {
                 Workspace workspace = (Workspace)sender;
-                state.Solid!.SmoothingAngle = Utility.DegToRad(45);
+                state.Cube!.SmoothingAngle = Utility.DegToRad(45);
 
-                workspace.Entities.Add(state.Solid, System.Drawing.Color.Red);
-                workspace.Entities.Add(state.Text, System.Drawing.Color.Cyan);
-                workspace.Entities.Add(state.Circle, System.Drawing.Color.Purple);
+                workspace.Entities.Add(state.Cube, System.Drawing.Color.Red);
+                workspace.Entities.Add(state.Cone, System.Drawing.Color.Lime);
+                workspace.Entities.Add(state.Circle, System.Drawing.Color.Blue);
+                workspace.Entities.Add(state.Text, System.Drawing.Color.OrangeRed);
 
                 workspace.ZoomFit();
             }
@@ -157,38 +170,74 @@ namespace EyeshotLearning
 
             public override void DoWork(BackgroundWorker worker, DoWorkEventArgs e)
             {
-                state.Text!.Translate(0, 0, 0.25);
-                state.Circle!.Scale(2);
+                state.NextStep(out var step);
+
+                switch (step)
+                {
+                    case CubeState.Step.NegX:
+                        state.Cone!.Rotate(Utility.DegToRad(-90), Vector3D.AxisY, Point3D.Origin);
+                        state.Circle!.Rotate(Utility.DegToRad(-90), Vector3D.AxisY, Point3D.Origin);
+                        state.Text!.Color = System.Drawing.Color.OrangeRed;
+                        break;
+                    case CubeState.Step.NegY:
+                        state.Cone!.Rotate(Utility.DegToRad(90), Vector3D.AxisZ, Point3D.Origin);
+                        state.Circle!.Rotate(Utility.DegToRad(90), Vector3D.AxisZ, Point3D.Origin);
+                        state.Text!.Color = System.Drawing.Color.DarkRed;
+                        break;
+                    case CubeState.Step.NegZ:
+                        state.Cone!.Rotate(Utility.DegToRad(90), Vector3D.AxisX, Point3D.Origin);
+                        state.Circle!.Rotate(Utility.DegToRad(90), Vector3D.AxisX, Point3D.Origin);
+                        state.Text!.Color = System.Drawing.Color.MediumVioletRed;
+                        break;
+                    case CubeState.Step.PosX:
+                        state.Cone!.Rotate(Utility.DegToRad(-90), Vector3D.AxisY, Point3D.Origin);
+                        state.Circle!.Rotate(Utility.DegToRad(-90), Vector3D.AxisY, Point3D.Origin);
+                        state.Text!.Color = System.Drawing.Color.Green;
+                        break;
+                    case CubeState.Step.PosY:
+                        state.Cone!.Rotate(Utility.DegToRad(90), Vector3D.AxisZ, Point3D.Origin);
+                        state.Circle!.Rotate(Utility.DegToRad(90), Vector3D.AxisZ, Point3D.Origin);
+                        state.Text!.Color = System.Drawing.Color.DarkGreen;
+                        break;
+                    case CubeState.Step.PosZ:
+                        state.Cone!.Rotate(Utility.DegToRad(90), Vector3D.AxisX, Point3D.Origin);
+                        state.Circle!.Rotate(Utility.DegToRad(90), Vector3D.AxisX, Point3D.Origin);
+                        state.Text!.Color = System.Drawing.Color.Lime;
+                        break;
+                }
+
+                state.Text!.InsertionPoint = state.Circle!.Center;
+                state.Text.TextString = step.ToString();
             }
 
             public override void WorkCompleted(object sender)
             {
                 Workspace workspace = (Workspace)sender;
 
-                workspace.Refresh();
+                workspace.Entities.Regen();
 
-                workspace.ZoomFit();
+                // workspace.ZoomFit();
             }
         }
 
         public class CubeState
         {
-            private Step step = Step.NegX;
-            public Solid? Solid { get; set; }
-            public Text? Text { get; set; }
+            public Step CurrentStep { get; private set; } = Step.NegX;
+            public Solid? Cube { get; set; }
+            public Solid? Cone { get; set; }
             public Circle? Circle { get; set; }
+            public Text? Text { get; set; }
 
-            public bool TryStep(out Step nextStep)
+            public void NextStep(out Step step)
             {
-                if (step == Step.Done)
+                CurrentStep = (Step)(((int)CurrentStep) + 1);
+
+                if (CurrentStep == Step.Done)
                 {
-                    nextStep = Step.Done;
-                    return false;
+                    CurrentStep = Step.NegX;
                 }
 
-                nextStep = (Step)(((int)step) + 1);
-                step = nextStep;
-                return true;
+                step = CurrentStep;
             }
 
             public enum Step
