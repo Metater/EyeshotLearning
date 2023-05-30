@@ -25,6 +25,7 @@ using System.Windows.Media.Media3D;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Point3D = devDept.Geometry.Point3D;
+using SelectionChangedEventArgs = devDept.Eyeshot.Control.SelectionChangedEventArgs;
 using Vector3D = devDept.Geometry.Vector3D;
 
 namespace EyeshotLearning
@@ -44,6 +45,7 @@ namespace EyeshotLearning
             design1.ProgressChanged += Design1_ProgressChanged;
             design1.WorkCancelled += Design1_WorkCancelled;
             design1.WorkCompleted += Design1_WorkCompleted;
+            design1.SelectionChanged += Design1_SelectionChanged;
         }
 
         protected override void OnContentRendered(EventArgs e)
@@ -51,6 +53,8 @@ namespace EyeshotLearning
             SetDisplayMode(design1, displayType.Rendered);
 
             design1.ProgressBar.Visible = false;
+
+            design1.ActionMode = actionType.SelectVisibleByPick;
 
             // design1.ActiveViewport.Labels.Add(new TextOnly(0, 0, 0, "Hello, World!", new Font("Tahoma", 16f, System.Drawing.FontStyle.Bold), System.Drawing.Color.Green, ContentAlignment.MiddleCenter));
 
@@ -62,17 +66,26 @@ namespace EyeshotLearning
 
         private void Design1_ProgressChanged(object sender, WorkUnit.ProgressChangedEventArgs e)
         {
-            labelProgressBar.Content = design1.ProgressBar.Text;
+            progressBarLabel.Content = design1.ProgressBar.Text;
             progressBar.Value = e.Progress;
         }
         private void Design1_WorkCancelled(object sender, WorkUnitEventArgs e)
         {
-            labelProgressBar.Content = "Cancelled";
+            progressBarLabel.Content = "Cancelled";
             progressBar.Value = 0;
         }
         private void Design1_WorkCompleted(object sender, WorkCompletedEventArgs e)
         {
-            labelProgressBar.Content = $"Completed work, On step: {state.CurrentStep}";
+            progressBarLabel.Content = $"Completed work, On step: {state.CurrentStep}";
+        }
+        private void Design1_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            StringBuilder sb = new();
+            foreach (var addedItem in e.AddedItems)
+            {
+                sb.Append($"{addedItem.Item.GetType()} ");
+            }
+            infoLabel.Content = sb.ToString();
         }
 
         private void Button_Step_Click(object sender, RoutedEventArgs e)
@@ -129,20 +142,35 @@ namespace EyeshotLearning
 
             public override void DoWork(BackgroundWorker worker, DoWorkEventArgs e)
             {
+                UpdateProgress(0, 4, "Waiting", worker);
+                Thread.Sleep(2000);
+
                 state.Cube = Solid.CreateBox(1, 1, 1);
                 state.Cube.Translate(-0.5, -0.5, -0.5);
+                Thread.Sleep(500);
+
+                UpdateProgress(1, 4, "Generated cube", worker);
 
                 state.Cone = Solid.CreateCone(0.5, 0.1, 1, 16);
                 state.Cone.Translate(0, 0, -0.5);
                 state.Cone.Rotate(Utility.DegToRad(-90), Vector3D.AxisY);
                 state.Cone.Translate(-0.5, 0, 0);
+                Thread.Sleep(500);
+
+                UpdateProgress(2, 4, "Generated cone", worker);
 
                 state.Circle = new Circle(Plane.YZ, new Point3D(-1.5, 0, 0), 0.5);
+                Thread.Sleep(500);
+
+                UpdateProgress(3, 4, "Generated circle", worker);
 
                 state.Text = new Text(Plane.YZ, new Point3D(-1.5, 0, 0), "Hello, World!", 0.1, Text.alignmentType.MiddleCenter)
                 {
                     Billboard = true
                 };
+                Thread.Sleep(500);
+
+                UpdateProgress(4, 4, "Generated text", worker);
             }
 
             public override void WorkCompleted(object sender)
