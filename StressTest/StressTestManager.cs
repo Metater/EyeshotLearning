@@ -5,6 +5,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using devDept.Eyeshot;
+using devDept.Geometry;
+using devDept.Graphics;
 
 namespace EyeshotLearning.StressTest
 {
@@ -29,6 +32,17 @@ namespace EyeshotLearning.StressTest
 
         public void Init()
         {
+            // design.Rendered.EdgeColorMethod = edgeColorMethodType.EntityColor;
+            // design.Rendered.EdgeThickness = 1;
+
+            // Bounding box override
+            design.BoundingBox.Min = new Point3D(-100, -100, -100);
+            design.BoundingBox.Max = new Point3D(100, 100, 100);
+            design.BoundingBox.OverrideSceneExtents = true;
+
+            // Shadows are not currently supported in animations
+            design.Rendered.ShadowMode = shadowType.None;
+
             Run();
         }
 
@@ -39,6 +53,7 @@ namespace EyeshotLearning.StressTest
 
         private void Run()
         {
+            design.StopAnimation();
             workManager.AppendToQueue(new BuildStressTest(state));
             workManager.RunAll(design);
         }
@@ -56,6 +71,8 @@ namespace EyeshotLearning.StressTest
         private void Design1_WorkCompleted(object sender, WorkCompletedEventArgs e)
         {
             window.progressBarLabel.Content = "Completed work";
+
+            design.StartAnimation(1);
         }
     }
 }
