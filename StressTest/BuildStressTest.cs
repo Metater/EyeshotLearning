@@ -39,17 +39,40 @@ namespace EyeshotLearning.StressTest
                     argb |= (int)0xFF000000;
                 }
                 Color color = Color.FromArgb(argb);
-                Mesh cube = Mesh.CreateBox(1, 1, 1);
-                cube.ColorMethod = colorMethodType.byEntity;
-                cube.Color = color;
+
+                int meshType = state.random.Next(0, 5);
+                Mesh mesh = null!;
+                switch (meshType)
+                {
+                    case 0:
+                        mesh = Mesh.CreateBox(1, 1, 1);
+                        break;
+                    case 1:
+                        mesh = Mesh.CreateTorus(1, 0.5, 16, 8);
+                        break;
+                    case 2:
+                        mesh = Mesh.CreateSphere(1, 16, 16);
+                        break;
+                    case 3:
+                        mesh = Mesh.CreateCylinder(1, 1, 16);
+                        break;
+                    case 4:
+                        mesh = Mesh.CreateCone(1, 0, 1, 16);
+                        break;
+                }
+
+                // Mesh cube = Mesh.CreateBox(1, 1, 1);
+
+                mesh.ColorMethod = colorMethodType.byEntity;
+                mesh.Color = color;
                 Vector3D position = new(GetRandomDouble(-50, 50), GetRandomDouble(-50, 50), GetRandomDouble(-50, 50));
-                cube.Translate(position);
-                cube.EntityData = new StressTestEntityData();
+                mesh.Translate(position);
+                mesh.EntityData = new StressTestEntityData();
 
                 string blockName = i.ToString();
 
                 Block b = new(blockName);
-                b.Entities.Add(cube);
+                b.Entities.Add(mesh);
                 state.blocks.Add(b);
 
                 state.entities.Add(new TranslatingEntity(state.stopwatch, state.random, blockName));
