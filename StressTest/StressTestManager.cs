@@ -32,8 +32,9 @@ namespace EyeshotLearning.StressTest
 
         public void Init()
         {
-            // design.Rendered.EdgeColorMethod = edgeColorMethodType.EntityColor;
+            design.Rendered.EdgeColorMethod = edgeColorMethodType.SingleColor;
             // design.Rendered.EdgeThickness = 1;
+            design.Rendered.EdgeColor = System.Drawing.Color.AntiqueWhite;
 
             // Bounding box override
             design.BoundingBox.Min = new Point3D(-100, -100, -100);

@@ -39,7 +39,7 @@
                             <ddes:ViewCubeIcon Lighting="False" />
                         </ddes:Viewport.ViewCubeIcon>
                         <ddes:Viewport.Background>
-                            <ddes:BackgroundSettings StyleMode="Solid" TopColor="WhiteSmoke" />
+                            <ddes:BackgroundSettings StyleMode="Solid" TopColor="#36393E" />
                         </ddes:Viewport.Background>
                         <ddes:Viewport.ToolBars>
                             <ddes:ToolBar Position="HorizontalTopCenter">
