@@ -12,7 +12,7 @@ namespace EyeshotLearning.StressTest
 {
     public class TranslatingEntity : BlockReference
     {
-        private const double speed = 5;
+        private const double speed = 0.5;
         private const double amplitude = 10;
 
         private readonly Stopwatch stopwatch;
